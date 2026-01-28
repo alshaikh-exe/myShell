@@ -15,22 +15,31 @@ int main()
     char input[512];
     char *token;
 
-    printf("shell> ");
+    while(1)
+    { printf("shell> ");
 
-    if (fgets(input, sizeof(input), stdin) != NULL)
-    {
+    if (fgets(input, sizeof(input), stdin) != NULL) {
+        input[strcspn(input, "\n")] = 0; //
         token = strtok(input, " \t|><&;");
 
-        while (token != NULL)
-        {
+        if(token == NULL){ //
+            continue;
+        }
+
+        if(strcmp(token, "exit") == 0){ 
+            break;
+        }
+
+        while (token != NULL) {
             printf(" %s \n", token);
             token = strtok(NULL, " \t|><&;");
-        }
+         }
     }
 
-    else
-    {
+    else{
         printf("Error reading input");
+        break; 
+    }
     }
 
     return 0;
