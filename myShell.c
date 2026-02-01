@@ -20,24 +20,25 @@ int main()
 
     if (fgets(input, sizeof(input), stdin) != NULL) {
         input[strcspn(input, "\n")] = 0; //
-        token = strtok(input, " \t|><&;");
+        token = strtok(input, " \t\n|><&;");
 
         if(token == NULL){ //
             continue;
         }
 
         if(strcmp(token, "exit") == 0){ 
+            printf("\n");
             break;
         }
 
         while (token != NULL) {
-            printf(" %s \n", token);
-            token = strtok(NULL, " \t|><&;");
+            printf("%s\n", token);
+            token = strtok(NULL, " \t\n|><&;");
          }
     }
 
     else{
-        printf("Error reading input");
+        printf("\n");
         break; 
     }
     }
