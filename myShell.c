@@ -16,10 +16,21 @@ int main()
     char *token;
 
     while(1)
-    { printf("shell> ");
+    { 
+        printf("shell> ");
 
-    if (fgets(input, sizeof(input), stdin) != NULL) {
-        input[strcspn(input, "\n")] = 0; //
+        if (fgets(input, sizeof(input), stdin) == NULL) {
+            if (feof(stdin)){
+                //ctrl + d pressed
+                printf("\n");
+                break;
+            }else if (ferror(stdin)){
+                perror("Error reading input");
+                break;
+            }
+        }
+    
+        input[strcspn(input, "\n")] = 0; 
         token = strtok(input, " \t\n|><&;");
 
         if(token == NULL){ //
@@ -31,16 +42,11 @@ int main()
             break;
         }
 
+
         while (token != NULL) {
             printf("%s\n", token);
             token = strtok(NULL, " \t\n|><&;");
          }
-    }
-
-    else{
-        printf("\n");
-        break; 
-    }
     }
 
     return 0;
