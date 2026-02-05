@@ -1,0 +1,5 @@
+myShell
+stage2
+*.exe
+*.out
+*.o

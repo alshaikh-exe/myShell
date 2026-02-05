@@ -2,12 +2,9 @@
 #include <string.h>
 #include <unistd.h>    // fork
 #include <sys/types.h> // pid_t
-// #include <sys/wait.h> // wait
+#include <sys/wait.h>  // wait
 
-
-#define MAX_INPUT 512
 #define max_args 50
-
 
 int parse_input(char *line, char *argv[])
 {
@@ -39,10 +36,30 @@ int parse_input(char *line, char *argv[])
     token 2 = "/home", store in argv[2].
     */
 
-    argv[argc] = NULL;   // NULL-terminate argv
-    return (argc);       // return number of tokens
+    argv[argc] = NULL; // NULL-terminate argv
+    return (argc);     // return number of tokens
 }
 
+void execCommand(char *argv[])
+{
+    pid_t pid = fork();
+    if (pid < 0)
+    {
+        perror("Fork Failed");
+    }
+    else if (pid == 0)
+    {
+        if (execvp(argv[0], argv) == -1)
+        {
+            fprintf(stderr, "shell: command not found %s\n", argv[0]);
+            _exit(1);
+        }
+    }
+    else
+    {
+        wait(NULL);
+    }
+}
 
 int main()
 {
@@ -66,11 +83,14 @@ int main()
         {
             continue;
         }
-
-        if (strcmp(argv[0], "exit") == 0)
+        if (argc > 0)
         {
-            printf("\n");
-            break;
+            if (strcmp(argv[0], "exit") == 0)
+            {
+                printf("\n");
+                break;
+            }
+            execCommand(argv);
         }
 
         for (int i = 0; i < argc; i++)
@@ -81,4 +101,4 @@ int main()
 
     return 0;
 }
- 
+
