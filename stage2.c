@@ -3,6 +3,7 @@
 #include <unistd.h>    // fork
 #include <sys/types.h> // pid_t
 #include <sys/wait.h>  // wait
+#include <stdlib.h>    // exit
 
 #define max_args 50
 
@@ -49,11 +50,9 @@ void execCommand(char *argv[])
     }
     else if (pid == 0)
     {
-        if (execvp(argv[0], argv) == -1)
-        {
-            fprintf(stderr, "shell: command not found %s\n", argv[0]);
-            _exit(1);
-        }
+        execvp(argv[0], argv);
+        perror("execvp");
+        exit(1);
     }
     else
     {
@@ -101,4 +100,3 @@ int main()
 
     return 0;
 }
-
