@@ -45,58 +45,68 @@ int parse_input(char *line, char *argv[])
 
 void execCommand(char *argv[])
 {
-    pid_t pid = fork(); //process cloned
+    pid_t pid = fork(); // process cloned
     if (pid < 0)
     {
         perror("Fork Failed");
     }
     else if (pid == 0)
-    {   // -- Child Process --
+    { // -- Child Process --
         // replace new child process with program passed by the user
         execvp(argv[0], argv);
         perror("execvp");
-        exit(1); // kill the child 
+        exit(1); // kill the child
     }
     else
     {
-        // parent process : wait for the child to finish 
+        // parent process : wait for the child to finish
         wait(NULL);
     }
 }
 
-void getpath(char** args, int arg_count)
+void getpath(char **args, int arg_count)
 {
-    char* path = getenv("PATH");
-    if (path == NULL){
+    char *path = getenv("PATH");
+    if (path == NULL)
+    {
         printf("PATH not found.\n");
     }
-    else if(arg_count == 1){
-        printf("Current PATH:~%s\n",path);
+    else if (arg_count == 1)
+    {
+        printf("Current PATH:~%s\n", path);
     }
-    else{
+    else
+    {
         printf("Error: getpath takes no parameters.\n");
     }
-    
 }
 
-void setpath(char** args, int arg_count)
+void setpath(char **args, int arg_count)
 {
-    if(arg_count == 1){
+    if (arg_count == 1)
+    {
         printf("Error: too few arguments to setpath.\n");
-    }else if(arg_count == 2){
-        if (setenv("PATH", args[1], 1) == -1) {
-        perror("setenv");
+    }
+    else if (arg_count == 2)
+    {
+        if (setenv("PATH", args[1], 1) == -1)
+        {
+            perror("setenv");
         }
-    }else{
+    }
+    else
+    {
         printf("Error: too many arguments passed.\n");
     }
 }
 
-void cleanup(char* originalPath){
-    if(originalPath != NULL){
-    setenv("PATH", originalPath, 1);
-    printf("Restored Path: %s\n", getenv("PATH"));
-    free(originalPath);
+void cleanup(char *originalPath)
+{
+    if (originalPath != NULL)
+    {
+        setenv("PATH", originalPath, 1);
+        printf("Restored Path: %s\n", getenv("PATH"));
+        free(originalPath);
     }
 }
 
@@ -105,11 +115,12 @@ int main()
     char input[512];
     char *argv[MAX_ARGS];
     int argc;
-    char* home = getenv("HOME");
-    char* originalPath = strdup(getenv("PATH"));
-    
+    char *home = getenv("HOME");
+    char *originalPath = strdup(getenv("PATH"));
+
     // change at the start of your shell its current direcotry to the HOME directory
-    if(home != NULL){
+    if (home != NULL)
+    {
         chdir(home);
     }
 
@@ -135,11 +146,14 @@ int main()
             {
                 cleanup(originalPath);
                 break;
-            }//Handle getpath and setpath
-            else if (strcmp (argv[0], "getpath") == 0){
+            } // Handle getpath and setpath
+            else if (strcmp(argv[0], "getpath") == 0)
+            {
                 getpath(argv, argc);
                 continue;
-            }else if (strcmp (argv[0], "setpath") == 0){
+            }
+            else if (strcmp(argv[0], "setpath") == 0)
+            {
                 setpath(argv, argc);
                 continue;
             }
