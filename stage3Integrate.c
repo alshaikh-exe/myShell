@@ -54,7 +54,8 @@ void execCommand(char *argv[])
     { // -- Child Process --
         // replace new child process with program passed by the user
         execvp(argv[0], argv);
-        perror("execvp");
+        // perror("execvp");
+        fprintf(stderr, "%s command not found\n", argv[0]);
         exit(1); // kill the child
     }
     else
@@ -110,7 +111,13 @@ void cleanup(char *originalPath)
     }
 }
 
-int main()
+// void printDir(){
+//     char cwd[1024];
+//     getcwd(cwd, sizeof(cwd));
+//     printf("Dir: %s\n", cwd);
+// }
+
+int main(void)
 {
     char input[512];
     char *argv[MAX_ARGS];
@@ -124,6 +131,9 @@ int main()
         chdir(home);
     }
 
+    //printDir();
+    // char s[100];
+    // printf("%s\n", getcwd(s,100));
     while (1)
     {
         printf("shell> ");
@@ -151,19 +161,26 @@ int main()
             {
                 getpath(argv, argc);
                 continue;
+            } else if (strcmp(argv[0], "cd")==0){
+                chdir(argv[1]);
+                if (argc>=2){
+                    printf("Error: too many arguments to change directory.\n");
+                    continue;
+                }
             }
             else if (strcmp(argv[0], "setpath") == 0)
             {
                 setpath(argv, argc);
                 continue;
-            }
+            } 
+            
             execCommand(argv);
         }
 
-        for (int i = 0; i < argc; i++)
-        {
-            printf("%s\n", argv[i]);
-        }
+        // for (int i = 0; i < argc; i++)
+        // {
+        //     printf("%s\n", argv[i]);
+        // }
     }
 
     return 0;
