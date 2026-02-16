@@ -13,6 +13,7 @@ Stage 4:
 #include <sys/types.h> // pid_t
 #include <sys/wait.h>  // wait
 #include <stdlib.h>    // exit
+#include <errno.h> //strerror and errno
 
 #define MAX_ARGS 50
 
@@ -120,12 +121,53 @@ void cleanup(char *originalPath)
     }
 }
 
-// void printDir(){
-//     char cwd[1024];
-//     getcwd(cwd, sizeof(cwd));
-//     printf("Dir: %s\n", cwd);
-// }
+void changeDir(char **argv, int argc)
+{
+    char *home = getenv("HOME");
+    if (argc == 1)
+    {
+        if (home != NULL && chdir(home) != 0)
+        {
+            perror("cd");
+        }
+    }
+    else if (argc == 2)
+    {
+        if (chdir(argv[1]) != 0)
+        {
+            fprintf(stderr, "cd: %s: %s\n", argv[1], strerror(errno));
+        }
+    }
+    else
+    {
+        printf("ERROR: too many arguments to change dir.\n");
+    }
+}
 
+void commands(char **argv, int argc, char *originalPath)
+{
+    if (strcmp(argv[0], "exit") == 0)
+    {
+        cleanup(originalPath);
+        exit(0);
+    } // Handle getpath and setpath
+    else if (strcmp(argv[0], "getpath") == 0)
+    {
+        getpath(argv, argc);
+    }
+    else if (strcmp(argv[0], "setpath") == 0)
+    {
+        setpath(argv, argc);
+    }
+    else if (strcmp(argv[0], "cd") == 0)
+    {
+        changeDir(argv, argc);
+    }
+    else
+    {
+        execCommand(argv);
+    }
+}
 int main(void)
 {
     char input[512];
@@ -140,9 +182,8 @@ int main(void)
         chdir(home);
     }
 
-    //printDir();
-    // char s[100];
-    // printf("%s\n", getcwd(s,100));
+    //  char s[100];
+    //  printf("%s\n", getcwd(s,100));
     while (1)
     {
         printf("shell> ");
@@ -159,37 +200,8 @@ int main(void)
         {
             continue;
         }
-        if (argc > 0)
-        {
-            if (strcmp(argv[0], "exit") == 0)
-            {
-                cleanup(originalPath);
-                break;
-            } // Handle getpath and setpath
-            else if (strcmp(argv[0], "getpath") == 0)
-            {
-                getpath(argv, argc);
-                continue;
-            } else if (strcmp(argv[0], "cd")==0){
-                chdir(argv[1]);
-                if (argc>=2){
-                    printf("Error: too many arguments to change directory.\n");
-                    continue;
-                }
-            }
-            else if (strcmp(argv[0], "setpath") == 0)
-            {
-                setpath(argv, argc);
-                continue;
-            } 
-            
-            execCommand(argv);
-        }
 
-        // for (int i = 0; i < argc; i++)
-        // {
-        //     printf("%s\n", argv[i]);
-        // }
+        commands(argv, argc, originalPath);
     }
 
     return 0;
