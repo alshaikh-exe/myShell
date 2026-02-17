@@ -1,10 +1,13 @@
 /*
-Stage 4:
-1- Implement internal cd command
-2- Handle cd with no arguments (change to HOME directory)
-3- Handle cd with one argument (change to specific path)
-4- Use perror for system errors
-5- Handle error for too many arguments (more than 1 parameter)
+Stage 5:
+1- Create a place to store commands
+2- Save 20 commands 
+3- Detect history commands (if the first token starts with '!')
+4- Save normal commands
+5- Implement history command (print stored commmands)
+6- Validate history requests (ensure the requested command exists)
+7- Retrieve command from history (!!, !n, !-n)
+8- Execute a command from history (retrieve, parse, then execute and do not store in history)
 */
 
 #include <stdio.h>
