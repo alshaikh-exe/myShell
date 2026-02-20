@@ -1,10 +1,10 @@
 /*
 Stage 5:
-1- Create a place to store commands
-2- Save 20 commands 
-3- Detect history commands (if the first token starts with '!')
-4- Save normal commands
-5- Implement history command (print stored commmands)
+1- Create a place to store commands (completed by A)
+2- Save 20 commands (completed by A)
+3- Detect history commands (if the first token starts with '!') (completed by A)
+4- Save normal commands (completed by A)
+5- Implement history command (print stored commmands) (completed by A)
 6- Validate history requests (ensure the requested command exists)
 7- Retrieve command from history (!!, !n, !-n)
 8- Execute a command from history (retrieve, parse, then execute and do not store in history)
@@ -16,9 +16,17 @@ Stage 5:
 #include <sys/types.h> // pid_t
 #include <sys/wait.h>  // wait
 #include <stdlib.h>    // exit
-#include <errno.h> //strerror and errno
+#include <errno.h>     //strerror and errno
 
 #define MAX_ARGS 50
+#define HIST_SIZE 20
+#define MAX_LINE 512
+
+char history[HIST_SIZE][MAX_LINE];
+
+int hist_count = 0; // number of commands entered
+int hist_next = 0; // circular pointer
+void print_history();
 
 // -- Stage 2 Implementation
 
@@ -154,6 +162,10 @@ void commands(char **argv, int argc, char *originalPath)
         cleanup(originalPath);
         exit(0);
     } // Handle getpath and setpath
+    else if (strcmp(argv[0], "history") == 0)
+    {
+        print_history();
+    }
     else if (strcmp(argv[0], "getpath") == 0)
     {
         getpath(argv, argc);
@@ -171,6 +183,43 @@ void commands(char **argv, int argc, char *originalPath)
         execCommand(argv);
     }
 }
+
+int is_history_command(char *line)
+{
+    if (line[0] == '!')
+        return 1;
+    return 0;
+}
+
+void add_history(char *line)
+{
+    if (line[0] == '!' || line[0] == '\0')
+        return;
+
+    strcpy(history[hist_next], line);
+
+    hist_next = (hist_next + 1) % HIST_SIZE; // count = (count+1) % 20
+    hist_count++;
+}
+
+void print_history()
+{
+
+    if (hist_count == 0)
+    {
+        printf("History is empty");
+        return;
+    }
+
+    int start = hist_count > HIST_SIZE ? hist_count - HIST_SIZE : 0;
+
+    for (int i = start; i < hist_count; i++)
+    {
+        int index = i % HIST_SIZE;
+        printf("%d %s \n", i + 1, history[index]);
+    }
+}
+
 int main(void)
 {
     char input[512];
@@ -197,12 +246,20 @@ int main(void)
             break;
         }
 
+        char original_line[MAX_LINE]; // command unmodified by strtok
+        strcpy(original_line, input);
+
+        int is_history = is_history_command(input); // checking if it starts with '!'
+
         argc = parse_input(input, argv);
 
         if (argc == 0)
         {
             continue;
         }
+
+        if (!is_history && strcmp(argv[0], "history") != 0)
+            add_history(original_line);
 
         commands(argv, argc, originalPath);
     }
