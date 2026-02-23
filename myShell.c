@@ -7,7 +7,7 @@ Stage 5:
 5- Implement history command (print stored commmands) (completed by A)
 6- Validate history requests (ensure the requested command exists)(completed by M)
 7- Retrieve command from history (!!, !n, !-n)(completed by M)
-8- Execute a command from history (retrieve, parse, then execute and do not store in history)
+8- Execute a command from history (retrieve, parse, then execute and do not store in history) (completed by M)
 */
 
 #include <stdio.h>
