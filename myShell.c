@@ -3,10 +3,10 @@ Stage 5:
 1- Create a place to store commands (completed by A)
 2- Save 20 commands (completed by A)
 3- Detect history commands (if the first token starts with '!') (completed by A)
-4- Save normal commands (completed by A)
+4- Save normal commands (completed by A) 
 5- Implement history command (print stored commmands) (completed by A)
-6- Validate history requests (ensure the requested command exists)
-7- Retrieve command from history (!!, !n, !-n)
+6- Validate history requests (ensure the requested command exists)(completed by M)
+7- Retrieve command from history (!!, !n, !-n)(completed by M)
 8- Execute a command from history (retrieve, parse, then execute and do not store in history)
 */
 
@@ -17,6 +17,7 @@ Stage 5:
 #include <sys/wait.h>  // wait
 #include <stdlib.h>    // exit
 #include <errno.h>     //strerror and errno
+#include <ctype.h>     // isdigit
 
 #define MAX_ARGS 50
 #define HIST_SIZE 20
@@ -163,7 +164,7 @@ void commands(char **argv, int argc, char *originalPath)
         exit(0);
     } // Handle getpath and setpath
     else if (strcmp(argv[0], "history") == 0)
-    {
+ {
         print_history();
     }
     else if (strcmp(argv[0], "getpath") == 0)
@@ -219,7 +220,164 @@ void print_history()
         printf("%d %s \n", i + 1, history[index]);
     }
 }
+/////////////////////////////////////////////// Stage 6 and 7 Implementation
 
+int history_exists(int cmd_no)
+{
+    if (hist_count <= 0) return 0;
+    if (cmd_no < 1 || cmd_no > hist_count) return 0;
+
+    // if history is full (more than HIST_SIZE commands ever entered),
+    if (hist_count > HIST_SIZE)
+    {
+        int oldest_available = hist_count - HIST_SIZE + 1;
+        if (cmd_no < oldest_available) return 0;
+    }
+    return 1;
+}
+
+/*
+ * copies the command line for history command number cmd_no into out (null-terminated).
+ * returns 1 on success 0 on failure.
+ */
+int get_history_command(int cmd_no, char *out, size_t outsz)
+{
+    if (!history_exists(cmd_no)) return 0;
+
+    int index = (cmd_no - 1) % HIST_SIZE;
+    strncpy(out, history[index], outsz - 1);
+    out[outsz - 1] = '\0';
+
+
+    out[strcspn(out, "\n")] = '\0';
+    return 1;
+}
+
+
+int resolve_history_invocation(const char *line, char *out, size_t outsz)
+{
+    // skip leading whitespace
+    while (*line == ' ' || *line == '\t') line++;
+
+    if (*line != '!')
+        return 0; // not a history invocation
+
+    if (hist_count == 0)
+    {
+        fprintf(stderr, "Error: history is empty.\n");
+        return 0;
+    }
+
+    // extract first token (up to whitespace)
+    char token[MAX_LINE];
+    size_t i = 0;
+    while (line[i] != '\0' && line[i] != ' ' && line[i] != '\t' && line[i] != '\n' && i < sizeof(token) - 1)
+    {
+        token[i] = line[i];
+        i++;
+    }
+    token[i] = '\0';
+
+    // the "rest" becomes extra parameters
+    const char *rest = line + i;
+    while (*rest == ' ' || *rest == '\t') rest++;
+
+    int target_no = -1;
+
+    // case 1: !!
+    if (strcmp(token, "!!") == 0)
+    {
+        target_no = hist_count; // last command entered into history
+    }
+    // case 2: !-n
+    else if (strncmp(token, "!-", 2) == 0)
+    {
+        const char *p = token + 2;
+        if (*p == '\0')
+        {
+            fprintf(stderr, "Error: invalid history invocation '%s'. Use !-<number>.\n", token);
+            return 0;
+        }
+        for (const char *q = p; *q; q++)
+        {
+            if (!isdigit((unsigned char)*q))
+            {
+                fprintf(stderr, "Error: invalid history invocation '%s'. Use !-<number>.\n", token);
+                return 0;
+            }
+        }
+
+        int n = atoi(p);
+
+        // per test note: !-0 should execute the last command in history
+        if (n == 0)
+            target_no = hist_count;
+        else
+            target_no = (hist_count + 1) - n; // "current command number" is hist_count+1
+    }
+    // case 3: !n
+    else
+    {
+        const char *p = token + 1;
+        if (*p == '\0')
+        {
+            fprintf(stderr, "Error: invalid history invocation '!'. Use !!, !<number>, or !-<number>.\n");
+            return 0;
+        }
+        for (const char *q = p; *q; q++)
+        {
+            if (!isdigit((unsigned char)*q))
+            {
+                fprintf(stderr, "Error: invalid history invocation '%s'. Use !<number>.\n", token);
+                return 0;
+            }
+        }
+
+        target_no = atoi(p);
+    }
+
+    if (!history_exists(target_no))
+    {
+        // differentiate “out of range” vs “too old / overwritten”
+        if (target_no < 1 || target_no > hist_count)
+        {
+            fprintf(stderr, "Error: no such command in history: %d.\n", target_no);
+        }
+        else
+        {
+            fprintf(stderr, "Error: command %d is not in the last %d history entries.\n", target_no, HIST_SIZE);
+        }
+        return 0;
+    }
+
+    char base[MAX_LINE];
+    if (!get_history_command(target_no, base, sizeof(base)))
+    {
+        fprintf(stderr, "Error: failed to retrieve command %d from history.\n", target_no);
+        return 0;
+    }
+    if (*rest == '\0')
+    {
+        strncpy(out, base, outsz - 1);
+        out[outsz - 1] = '\0';
+    }
+    else
+    {
+        // base + space + rest
+        snprintf(out, outsz, "%s %s", base, rest);
+    }
+
+    // ensure  command is not itself a history invocation
+    while (*out == ' ' || *out == '\t') out++;
+    if (out[0] == '!')
+    {
+        fprintf(stderr, "Error: history invocation cannot resolve to another history invocation.\n");
+        return 0;
+    }
+
+    return 1;
+}
+/// /////////////////////////////
 int main(void)
 {
     char input[512];
@@ -245,14 +403,37 @@ int main(void)
             cleanup(originalPath);
             break;
         }
-
+////////////////////////////////////////////////////////////////////////////////////
         char original_line[MAX_LINE]; // command unmodified by strtok
         strcpy(original_line, input);
 
-        int is_history = is_history_command(input); // checking if it starts with '!'
+        int is_history = is_history_command(original_line); // check raw line
 
+        // if history invocation, resolve it BEFORE parse_input()
+        if (is_history)
+        {
+            char resolved[MAX_LINE];
+
+            if (!resolve_history_invocation(original_line, resolved, sizeof(resolved)))
+            {
+                continue;
+            }
+
+            // parse and execute the resolved command (do NOT store in history)
+            char exec_line[MAX_LINE];
+            strncpy(exec_line, resolved, sizeof(exec_line) - 1);
+            exec_line[sizeof(exec_line) - 1] = '\0';
+
+            argc = parse_input(exec_line, argv);
+            if (argc == 0) continue;
+
+            commands(argv, argc, originalPath);
+            continue;
+        }
+
+        // normal (non-history) command: parse input as before
         argc = parse_input(input, argv);
-
+///////////////////////////////////////////////////////////////////////////////////
         if (argc == 0)
         {
             continue;
