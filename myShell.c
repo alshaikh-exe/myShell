@@ -1,13 +1,12 @@
 /*
-Stage 5:
-1- Create a place to store commands (completed by A)
-2- Save 20 commands (completed by A)
-3- Detect history commands (if the first token starts with '!') (completed by A)
-4- Save normal commands (completed by A) 
-5- Implement history command (print stored commmands) (completed by A)
-6- Validate history requests (ensure the requested command exists)(completed by M)
-7- Retrieve command from history (!!, !n, !-n)(completed by M)
-8- Execute a command from history (retrieve, parse, then execute and do not store in history) (completed by M)
+Stage 6: Persistent history
+1- Locate .hist_list in HOME Directory.
+2- Load history from .hist_list on startup.
+3- Parse each line (number + command) and initialie history structure.
+4- Handle 512-character limit.
+5- Handle missing/failed files.
+6- Save history to .hist_list on exit.
+7- Integrate loading/saving into start and exit.
 */
 
 #include <stdio.h>
