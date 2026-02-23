@@ -86,14 +86,14 @@ void execCommand(char *argv[])
     }
 }
 
-void getpath(char **args, int arg_count)
+void getpath(char **args, int argc)
 {
     char *path = getenv("PATH");
     if (path == NULL)
     {
         printf("PATH not found.\n");
     }
-    else if (arg_count == 1)
+    else if (argc == 1)
     {
         printf("Current PATH:~%s\n", path);
     }
@@ -103,13 +103,13 @@ void getpath(char **args, int arg_count)
     }
 }
 
-void setpath(char **args, int arg_count)
+void setpath(char **args, int argc)
 {
-    if (arg_count == 1)
+    if (argc == 1)
     {
         printf("Error: too few arguments to setpath.\n");
     }
-    else if (arg_count == 2)
+    else if (argc == 2)
     {
         if (setenv("PATH", args[1], 1) == -1)
         {
@@ -184,8 +184,9 @@ void add_history(char *line)
     hist_count++;
 }
 
-void print_history()
+void print_history(char **argv, int argc)
 {
+    if(argc == 1){
 
     if (hist_count == 0)
     {
@@ -199,6 +200,11 @@ void print_history()
     {
         int index = i % HIST_SIZE;
         printf("%d %s \n", i + 1, history[index]);
+    }
+    } else 
+    {
+        fprintf(stderr, "myshell: Event not found: command takes no extra parameter.\n"); 
+        return;
     }
 }
 /////////////////////////////////////////////// Stage 6 and 7 Implementation
@@ -270,6 +276,7 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
     {
         target_no = hist_count; // last command entered into history
     }
+
     // case 2: !-n
     else if (strncmp(token, "!-", 2) == 0)
     {
@@ -291,10 +298,13 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         int n = atoi(p);
 
         // per test note: !-0 should execute the last command in history
-        if (n == 0)
-            target_no = hist_count;
-        else
+        if (n == 0) {
+            fprintf(stderr, "myshell: Event not found: '%s'. Use !-<number>.\n", token); 
+            return 0;
+        }
+        else 
             target_no = (hist_count + 1) - n; // "current command number" is hist_count+1
+        
     }
     // case 3: !n
     else
@@ -368,7 +378,7 @@ void commands(char **argv, int argc, char *originalPath)
     } // Handle getpath and setpath
     else if (strcmp(argv[0], "history") == 0)
  {
-        print_history();
+        print_history(argv , argc);
     }
     else if (strcmp(argv[0], "getpath") == 0)
     {
@@ -457,6 +467,7 @@ int main(void)
 
         commands(argv, argc, originalPath);
     }
+
 
     return 0;
 }
