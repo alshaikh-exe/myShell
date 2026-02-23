@@ -155,40 +155,22 @@ void changeDir(char **argv, int argc)
     }
 }
 
-void commands(char **argv, int argc, char *originalPath)
-{
-    if (strcmp(argv[0], "exit") == 0)
-    {
-        cleanup(originalPath);
-        exit(0);
-    } // Handle getpath and setpath
-    else if (strcmp(argv[0], "history") == 0)
- {
-        print_history();
-    }
-    else if (strcmp(argv[0], "getpath") == 0)
-    {
-        getpath(argv, argc);
-    }
-    else if (strcmp(argv[0], "setpath") == 0)
-    {
-        setpath(argv, argc);
-    }
-    else if (strcmp(argv[0], "cd") == 0)
-    {
-        changeDir(argv, argc);
-    }
-    else
-    {
-        execCommand(argv);
-    }
-}
-
+// Stage 5 
 int is_history_command(char *line)
 {
     if (line[0] == '!')
         return 1;
     return 0;
+}
+
+void clearHistory() {
+    
+    for (int i = 0; i < HIST_SIZE; i++)
+    {
+        history[i][0] = '\0';   // empty string
+    }
+    hist_count = 0;
+    hist_next = 0;
 }
 
 void add_history(char *line)
@@ -207,7 +189,7 @@ void print_history()
 
     if (hist_count == 0)
     {
-        printf("History is empty");
+        printf("History is empty\n");
         return;
     }
 
@@ -376,7 +358,39 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
 
     return 1;
 }
-/// /////////////////////////////
+
+void commands(char **argv, int argc, char *originalPath)
+{
+    if (strcmp(argv[0], "exit") == 0)
+    {
+        cleanup(originalPath);
+        exit(0);
+    } // Handle getpath and setpath
+    else if (strcmp(argv[0], "history") == 0)
+ {
+        print_history();
+    }
+    else if (strcmp(argv[0], "getpath") == 0)
+    {
+        getpath(argv, argc);
+    }
+    else if (strcmp(argv[0], "setpath") == 0)
+    {
+        setpath(argv, argc);
+    }
+    else if (strcmp(argv[0], "cd") == 0)
+    {
+        changeDir(argv, argc);
+    }
+    else if (strcmp(argv[0], "clearhistory") == 0){
+        clearHistory();
+    }else{
+        execCommand(argv);
+    }
+}
+
+
+
 int main(void)
 {
     char input[512];
@@ -402,7 +416,7 @@ int main(void)
             cleanup(originalPath);
             break;
         }
-////////////////////////////////////////////////////////////////////////////////////
+
         char original_line[MAX_LINE]; // command unmodified by strtok
         strcpy(original_line, input);
 
@@ -432,13 +446,13 @@ int main(void)
 
         // normal (non-history) command: parse input as before
         argc = parse_input(input, argv);
-///////////////////////////////////////////////////////////////////////////////////
+
         if (argc == 0)
         {
             continue;
         }
 
-        if (!is_history && strcmp(argv[0], "history") != 0)
+        if (!is_history)
             add_history(original_line);
 
         commands(argv, argc, originalPath);
