@@ -26,7 +26,7 @@ char history[HIST_SIZE][MAX_LINE];
 
 int hist_count = 0; // number of commands entered
 int hist_next = 0; // circular pointer
-void print_history();
+void print_history(char **argv, int argc);
 
 // -- Stage 2 Implementation
 
