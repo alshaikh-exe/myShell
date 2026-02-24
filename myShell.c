@@ -207,7 +207,7 @@ void print_history(char **argv, int argc)
         return;
     }
 }
-/////////////////////////////////////////////// Stage 6 and 7 Implementation
+//Task 6 and 7 Implementation
 
 int history_exists(int cmd_no)
 {
