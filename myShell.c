@@ -199,13 +199,13 @@ void print_history(char **argv, int argc)
     for (int i = start; i < hist_count; i++)
     {
         int index = i % HIST_SIZE;
-        printf("%d %s \n", i + 1, history[index]);
+        printf("%d %s \n", i - start + 1, history[index]);
     }
     } else 
-    {
+        {
         fprintf(stderr, "myshell: Event not found: command takes no extra parameter.\n"); 
         return;
-    }
+        }
 }
 //Task 6 and 7 Implementation
 
