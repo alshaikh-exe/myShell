@@ -1,6 +1,6 @@
 /*
 Stage 6: Persistent history
-1- Locate .hist_list in HOME Directory.
+1- Locate .hist_list in HOME Directory. (Completed by W)
 2- Load history from .hist_list on startup.
 3- Parse each line (number + command) and initialie history structure.
 4- Handle 512-character limit.
@@ -399,7 +399,14 @@ void commands(char **argv, int argc, char *originalPath)
     }
 }
 
-
+void _history_path(char *path){ // The path finding function.
+        char *home = getenv("HOME");
+        if(home == NULL){
+            path[0] = '\0';
+            return
+        }
+        snprintf(path, MAX_LINE, "%s/.hist_list", home);
+    }
 
 int main(void)
 {
@@ -467,7 +474,6 @@ int main(void)
 
         commands(argv, argc, originalPath);
     }
-
 
     return 0;
 }
