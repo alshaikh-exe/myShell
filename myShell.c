@@ -3,7 +3,7 @@ Stage 6: Persistent history
 1- Locate .hist_list in HOME Directory. (Completed by W)
 2- Load history from .hist_list on startup.
 3- Parse each line (number + command) and initialie history structure.
-4- Handle 512-character limit.
+4- Handle 512-character limit. (Completed by W)
 5- Handle missing/failed files. (Completed by W)
 6- Save history to .hist_list on exit.
 7- Integrate loading/saving into start and exit.
