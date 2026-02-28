@@ -4,7 +4,7 @@ Stage 6: Persistent history
 2- Load history from .hist_list on startup.
 3- Parse each line (number + command) and initialie history structure.
 4- Handle 512-character limit.
-5- Handle missing/failed files.
+5- Handle missing/failed files. (Completed by W)
 6- Save history to .hist_list on exit.
 7- Integrate loading/saving into start and exit.
 */
@@ -398,15 +398,35 @@ void commands(char **argv, int argc, char *originalPath)
         execCommand(argv);
     }
 }
-
-void _history_path(char *path){ // The path finding function.
+//Stage 6 R1: Locate .hist_list in HOME Directory.
+void get_history_path(char *path){ // The path finding function.
         char *home = getenv("HOME");
         if(home == NULL){
             path[0] = '\0';
-            return
+            return;
         }
         snprintf(path, MAX_LINE, "%s/.hist_list", home);
     }
+
+    void load_history(){
+        char path[MAX_LINE];
+        get_history_path(path);
+        if(path[0] =='\0')
+        return;
+
+        // Stage 6 R2: Load history from .hist_list on startup.
+        FILE *file = fopen(path, "r"); // read mode
+
+        //Stage 6 R5: Handle missing/failed files.
+        if(file == NULL){ 
+            return;
+        }
+        // Stage 6 R4: Handle 512-character limit.
+        char line[MAX_LINE + 20];
+        while(fgets(line, sizeof(line), file) != NULL){
+        line[strcspn(line, "\n")] = '\0'; // remove newline
+        }
+}
 
 int main(void)
 {
@@ -424,6 +444,9 @@ int main(void)
 
     //  char s[100];
     //  printf("%s\n", getcwd(s,100));
+
+    load_history();
+    
     while (1)
     {
         printf("shell> ");
