@@ -415,17 +415,19 @@ void get_history_path(char *path){ // The path finding function.
         return;
 
         // Stage 6 R2: Load history from .hist_list on startup.
-        FILE *file = fopen(path, "r"); // read mode
+        FILE *file = fopen(path, "r"); // Read mode
 
         //Stage 6 R5: Handle missing/failed files.
         if(file == NULL){ 
             return;
         }
         // Stage 6 R4: Handle 512-character limit.
-        char line[MAX_LINE + 20];
-        while(fgets(line, sizeof(line), file) != NULL){
-        line[strcspn(line, "\n")] = '\0'; // remove newline
-        }
+          char line[MAX_LINE + 20];        
+           while(fgets(line, sizeof(line), file) != NULL) {         
+            line[strcspn(line, "\n")] = '\0'; //Remove newline.
+           }
+
+
 }
 
 int main(void)
