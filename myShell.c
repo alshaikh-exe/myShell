@@ -408,6 +408,7 @@ void addAlias(const char *name, const char *command){
         strncpy(aliases[idx].command, command, MAX_ALIAS_COMMND-1);
         aliases[idx].command[MAX_ALIAS_COMMND-1]='\0';
         printf("Alias %s is overriden, cmd : \"%s\" => \"%s\" \n", name, aliases[idx].command, command);
+        return;
     }
 
     if (aliaseCount>=ALIAS_SIZE){
@@ -423,6 +424,22 @@ void addAlias(const char *name, const char *command){
 
     aliaseCount++;
     printf("Alias \"%s\" has been successfully added!\n", name);
+}
+
+void removeAlias(const char *name){
+    int idx = findAlias(name);
+
+    if (idx==-1){
+        printf("Alias \"%s\" not found!\n", name);
+        return;
+    }
+
+    for (int i=idx; i<aliaseCount; i++){
+        aliases[i]=aliases[i+1];
+    }
+
+    aliaseCount--;
+    printf("Alias \"%s\" has been removed\n", name);
 }
 
 
@@ -476,6 +493,12 @@ void commands(char **argv, int argc, char *originalPath)
         char command[MAX_ALIAS_COMMND];
         combineCommand(command, argv, argc);
         addAlias(argv[1], command);
+    }else if(strcmp(argv[0], "unalias")==0){
+        if (argc!=2){
+            printf("Usage: unalias <name>\n");
+            return;
+        }
+        removeAlias(argv[1]);
     }else{
         execCommand(argv);
     }
