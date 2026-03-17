@@ -21,6 +21,17 @@ Stage 6: Persistent history
 #define MAX_ARGS 50
 #define HIST_SIZE 20
 #define MAX_LINE 512
+#define ALIAS_SIZE 10
+#define MAX_ALIAS_NAME 100
+#define MAX_ALIAS_COMMND 512
+
+typedef struct Alias{
+    char name[MAX_ALIAS_NAME];
+    char command[MAX_ALIAS_COMMND];
+}Alias;
+
+Alias aliases[ALIAS_SIZE];
+int aliaseCount=0;
 
 char history[HIST_SIZE][MAX_LINE];
 
@@ -369,6 +380,63 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
     return 1;
 }
 
+
+int findAlias(const char *name){
+    for (int i=0; i<aliaseCount; i++){
+        if (strcmp(aliases[i].name, name)==0){
+            return i;
+        }
+    }
+    return -1;
+}
+
+
+void printAliases(){
+    if (aliaseCount==0){
+        printf("No aliases are set yet!\n");
+        return;
+    }
+
+    for (int i=0; i<aliaseCount; i++){
+        printf("Alias: \"%s\" => \"%s\"\n", aliases[i].name, aliases[i].command);
+    }
+}
+
+void addAlias(const char *name, const char *command){
+    int idx=findAlias(name);
+    if (idx!=-1){
+        strncpy(aliases[idx].command, command, MAX_ALIAS_COMMND-1);
+        aliases[idx].command[MAX_ALIAS_COMMND-1]='\0';
+        printf("Alias %s is overriden, cmd : \"%s\" => \"%s\" \n", name, aliases[idx].command, command);
+    }
+
+    if (aliaseCount>=ALIAS_SIZE){
+        printf("Cannot add alias: max aliases reached!\n");
+        return;
+    }
+
+    strncpy(aliases[aliaseCount].name, name, MAX_ALIAS_NAME-1);
+    aliases[aliaseCount].name[MAX_ALIAS_NAME-1]='\0';
+
+    strncpy(aliases[aliaseCount].command, command, MAX_ALIAS_COMMND-1);
+    aliases[aliaseCount].command[MAX_ALIAS_COMMND-1]='\0';
+
+    aliaseCount++;
+    printf("Alias \"%s\" has been successfully added!\n", name);
+}
+
+
+void combineCommand(char *cmd, char **argv, int argc){
+    cmd[0]='\0';
+    //skip name alias and name
+    for (int i=2; i<argc; i++){
+        strcat(cmd, argv[i]);
+        if (i<argc-1){
+            strcat(cmd, " ");
+        }
+    }
+}
+
 void commands(char **argv, int argc, char *originalPath)
 {
     if (strcmp(argv[0], "exit") == 0)
@@ -394,6 +462,20 @@ void commands(char **argv, int argc, char *originalPath)
     }
     else if (strcmp(argv[0], "clearhistory") == 0){
         clearHistory();
+    }else if (strcmp(argv[0], "alias")==0)
+    {
+        if (argc==1){
+            printAliases();
+            return;
+        }
+        if (argc<3){
+            printf("Usage: alias <name> <command>\n");
+            return;
+        }
+
+        char command[MAX_ALIAS_COMMND];
+        combineCommand(command, argv, argc);
+        addAlias(argv[1], command);
     }else{
         execCommand(argv);
     }
