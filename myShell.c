@@ -1,12 +1,13 @@
 /*
 Stage 6: Persistent history
-1- Locate .hist_list in HOME Directory. (Completed by W)
-2- Load history from .hist_list on startup.
-3- Parse each line (number + command) and initialie history structure.
-4- Handle 512-character limit. (Completed by W)
-5- Handle missing/failed files. (Completed by W)
-6- Save history to .hist_list on exit.
-7- Integrate loading/saving into start and exit.
+1- Locate .hist_list in HOME Directory.         (Completed by W)
+2- Load history from .hist_list on startup.     (Completed by M)
+3- Parse each line (number + command)           (Completed by M)
+   and initialize history structure.
+4- Handle 512-character limit.                  (Completed by W)
+5- Handle missing/failed files.                 (Completed by W)
+6- Save history to .hist_list on exit.          (Completed by M)
+7- Integrate loading/saving into start and exit.(Completed by M)
 */
 
 #include <stdio.h>
@@ -458,6 +459,7 @@ void commands(char **argv, int argc, char *originalPath)
 {
     if (strcmp(argv[0], "exit") == 0)
     {
+        save_history();
         cleanup(originalPath);
         exit(0);
     } // Handle getpath and setpath
@@ -541,6 +543,26 @@ void get_history_path(char *path){ // The path finding function.
       fclose(file);
 }
 
+void save_history(){
+    char path[MAX_LINE];
+    get_history_path(path);
+    if(path[0] =='\0')
+        return;
+
+    FILE *file = fopen(path, "w"); //write mode
+    if (file == NULL){
+        fprintf(stderr, "Error: could not open history file for writing.\n");
+        return;
+    }
+    int start = hist_count > HIST_SIZE ? hist_count - HIST_SIZE : 0;
+
+    for (int i = start; i < hist_count; i++){
+        int index = i % HIST_SIZE;
+        fprintf(file,"%d %s\n",i - start + 1, history[index]);
+    }
+fclose(file);
+}
+
 int main(void)
 {
     char input[512];
@@ -566,6 +588,7 @@ int main(void)
 
         if (fgets(input, sizeof(input), stdin) == NULL)
         {
+            save_history();
             cleanup(originalPath);
             break;
         }
