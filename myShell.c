@@ -530,9 +530,15 @@ void get_history_path(char *path){ // The path finding function.
           char line[MAX_LINE + 20];        
            while(fgets(line, sizeof(line), file) != NULL) {         
             line[strcspn(line, "\n")] = '\0'; //Remove newline.
-           }
+           
 
-
+           int num;
+           char cmd [MAX_LINE];
+           if (sscanf(line, "%d %511[^\n]", &num, cmd) == 2) { // Parse number and command.
+                add_history(cmd); // Add to history.
+            }
+        }
+      fclose(file);
 }
 
 int main(void)
