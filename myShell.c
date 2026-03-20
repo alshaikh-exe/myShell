@@ -1,13 +1,9 @@
 /*
-Stage 6: Persistent history
-1- Locate .hist_list in HOME Directory.         (Completed by W)
-2- Load history from .hist_list on startup.     (Completed by M)
-3- Parse each line (number + command)           (Completed by M)
-   and initialize history structure.
-4- Handle 512-character limit.                  (Completed by W)
-5- Handle missing/failed files.                 (Completed by W)
-6- Save history to .hist_list on exit.          (Completed by M)
-7- Integrate loading/saving into start and exit.(Completed by M)
+Stage 7: Persistent history
+1- Add alias (done)
+2- remove alias (done)
+3- invoke alias 
+4- print alias (done)
 */
 
 #include <stdio.h>
