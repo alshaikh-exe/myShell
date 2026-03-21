@@ -2,7 +2,7 @@
 Stage 7: Persistent history
 1- Add alias (done)
 2- remove alias (done)
-3- invoke alias 
+3- invoke alias
 4- print alias (done)
 */
 
@@ -22,19 +22,21 @@ Stage 7: Persistent history
 #define MAX_ALIAS_NAME 100
 #define MAX_ALIAS_COMMND 512
 
-typedef struct Alias{
+typedef struct Alias
+{
     char name[MAX_ALIAS_NAME];
     char command[MAX_ALIAS_COMMND];
-}Alias;
+} Alias;
 
 Alias aliases[ALIAS_SIZE];
-int aliaseCount=0;
+int aliaseCount = 0;
 
 char history[HIST_SIZE][MAX_LINE];
 
 int hist_count = 0; // number of commands entered
-int hist_next = 0; // circular pointer
+int hist_next = 0;  // circular pointer
 void print_history(char **argv, int argc);
+void save_history();
 
 // -- Stage 2 Implementation
 
@@ -163,7 +165,7 @@ void changeDir(char **argv, int argc)
     }
 }
 
-// Stage 5 
+// Stage 5
 int is_history_command(char *line)
 {
     if (line[0] == '!')
@@ -171,11 +173,12 @@ int is_history_command(char *line)
     return 0;
 }
 
-void clearHistory() {
-    
+void clearHistory()
+{
+
     for (int i = 0; i < HIST_SIZE; i++)
     {
-        history[i][0] = '\0';   // empty string
+        history[i][0] = '\0'; // empty string
     }
     hist_count = 0;
     hist_next = 0;
@@ -194,39 +197,44 @@ void add_history(char *line)
 
 void print_history(char **argv, int argc)
 {
-    if(argc == 1){
-
-    if (hist_count == 0)
+    if (argc == 1)
     {
-        printf("History is empty\n");
-        return;
-    }
 
-    int start = hist_count > HIST_SIZE ? hist_count - HIST_SIZE : 0;
-
-    for (int i = start; i < hist_count; i++)
-    {
-        int index = i % HIST_SIZE;
-        printf("%d %s \n", i - start + 1, history[index]);
-    }
-    } else 
+        if (hist_count == 0)
         {
-        fprintf(stderr, "myshell: Event not found: command takes no extra parameter.\n"); 
-        return;
+            printf("History is empty\n");
+            return;
         }
+
+        int start = hist_count > HIST_SIZE ? hist_count - HIST_SIZE : 0;
+
+        for (int i = start; i < hist_count; i++)
+        {
+            int index = i % HIST_SIZE;
+            printf("%d %s \n", i - start + 1, history[index]);
+        }
+    }
+    else
+    {
+        fprintf(stderr, "myshell: Event not found: command takes no extra parameter.\n");
+        return;
+    }
 }
-//Task 6 and 7 Implementation
+// Task 6 and 7 Implementation
 
 int history_exists(int cmd_no)
 {
-    if (hist_count <= 0) return 0;
-    if (cmd_no < 1 || cmd_no > hist_count) return 0;
+    if (hist_count <= 0)
+        return 0;
+    if (cmd_no < 1 || cmd_no > hist_count)
+        return 0;
 
     // if history is full (more than HIST_SIZE commands ever entered),
     if (hist_count > HIST_SIZE)
     {
         int oldest_available = hist_count - HIST_SIZE + 1;
-        if (cmd_no < oldest_available) return 0;
+        if (cmd_no < oldest_available)
+            return 0;
     }
     return 1;
 }
@@ -237,22 +245,22 @@ int history_exists(int cmd_no)
  */
 int get_history_command(int cmd_no, char *out, size_t outsz)
 {
-    if (!history_exists(cmd_no)) return 0;
+    if (!history_exists(cmd_no))
+        return 0;
 
     int index = (cmd_no - 1) % HIST_SIZE;
     strncpy(out, history[index], outsz - 1);
     out[outsz - 1] = '\0';
 
-
     out[strcspn(out, "\n")] = '\0';
     return 1;
 }
 
-
 int resolve_history_invocation(const char *line, char *out, size_t outsz)
 {
     // skip leading whitespace
-    while (*line == ' ' || *line == '\t') line++;
+    while (*line == ' ' || *line == '\t')
+        line++;
 
     if (*line != '!')
         return 0; // not a history invocation
@@ -275,7 +283,8 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
 
     // the "rest" becomes extra parameters
     const char *rest = line + i;
-    while (*rest == ' ' || *rest == '\t') rest++;
+    while (*rest == ' ' || *rest == '\t')
+        rest++;
 
     int target_no = -1;
 
@@ -306,13 +315,13 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         int n = atoi(p);
 
         // per test note: !-0 should execute the last command in history
-        if (n == 0) {
-            fprintf(stderr, "myshell: Event not found: '%s'. Use !-<number>.\n", token); 
+        if (n == 0)
+        {
+            fprintf(stderr, "myshell: Event not found: '%s'. Use !-<number>.\n", token);
             return 0;
         }
-        else 
+        else
             target_no = (hist_count + 1) - n; // "current command number" is hist_count+1
-        
     }
     // case 3: !n
     else
@@ -367,7 +376,8 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
     }
 
     // ensure  command is not itself a history invocation
-    while (*out == ' ' || *out == '\t') out++;
+    while (*out == ' ' || *out == '\t')
+        out++;
     if (out[0] == '!')
     {
         fprintf(stderr, "Error: history invocation cannot resolve to another history invocation.\n");
@@ -377,75 +387,89 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
     return 1;
 }
 
-
-int findAlias(const char *name){
-    for (int i=0; i<aliaseCount; i++){
-        if (strcmp(aliases[i].name, name)==0){
+int findAlias(const char *name)
+{
+    for (int i = 0; i < aliaseCount; i++)
+    {
+        if (strcmp(aliases[i].name, name) == 0)
+        {
             return i;
         }
     }
     return -1;
 }
 
-
-void printAliases(){
-    if (aliaseCount==0){
+void printAliases()
+{
+    if (aliaseCount == 0)
+    {
         printf("No aliases are set yet!\n");
         return;
     }
 
-    for (int i=0; i<aliaseCount; i++){
+    for (int i = 0; i < aliaseCount; i++)
+    {
         printf("Alias: \"%s\" => \"%s\"\n", aliases[i].name, aliases[i].command);
     }
 }
 
-void addAlias(const char *name, const char *command){
-    int idx=findAlias(name);
-    if (idx!=-1){
-        strncpy(aliases[idx].command, command, MAX_ALIAS_COMMND-1);
-        aliases[idx].command[MAX_ALIAS_COMMND-1]='\0';
-        printf("Alias %s is overriden, cmd : \"%s\" => \"%s\" \n", name, aliases[idx].command, command);
+void addAlias(const char *name, const char *command)
+{
+    int idx = findAlias(name);
+    if (idx != -1)
+    {
+        char oldCommand[MAX_ALIAS_COMMND];
+        strcpy(oldCommand, aliases[idx].command);
+        strncpy(aliases[idx].command, command, MAX_ALIAS_COMMND - 1);
+        aliases[idx].command[MAX_ALIAS_COMMND - 1] = '\0';
+        printf("Alias %s is overriden, cmd : \"%s\" => \"%s\" \n", name, oldCommand, command);
         return;
     }
 
-    if (aliaseCount>=ALIAS_SIZE){
+    if (aliaseCount >= ALIAS_SIZE)
+    {
         printf("Cannot add alias: max aliases reached!\n");
         return;
     }
 
-    strncpy(aliases[aliaseCount].name, name, MAX_ALIAS_NAME-1);
-    aliases[aliaseCount].name[MAX_ALIAS_NAME-1]='\0';
+    strncpy(aliases[aliaseCount].name, name, MAX_ALIAS_NAME - 1);
+    aliases[aliaseCount].name[MAX_ALIAS_NAME - 1] = '\0';
 
-    strncpy(aliases[aliaseCount].command, command, MAX_ALIAS_COMMND-1);
-    aliases[aliaseCount].command[MAX_ALIAS_COMMND-1]='\0';
+    strncpy(aliases[aliaseCount].command, command, MAX_ALIAS_COMMND - 1);
+    aliases[aliaseCount].command[MAX_ALIAS_COMMND - 1] = '\0';
 
     aliaseCount++;
     printf("Alias \"%s\" has been successfully added!\n", name);
 }
 
-void removeAlias(const char *name){
+void removeAlias(const char *name)
+{
     int idx = findAlias(name);
 
-    if (idx==-1){
+    if (idx == -1)
+    {
         printf("Alias \"%s\" not found!\n", name);
         return;
     }
 
-    for (int i=idx; i<aliaseCount; i++){
-        aliases[i]=aliases[i+1];
+    for (int i = idx; i < aliaseCount - 1; i++)
+    {
+        aliases[i] = aliases[i + 1];
     }
 
     aliaseCount--;
     printf("Alias \"%s\" has been removed\n", name);
 }
 
-
-void combineCommand(char *cmd, char **argv, int argc){
-    cmd[0]='\0';
-    //skip name alias and name
-    for (int i=2; i<argc; i++){
+void combineCommand(char *cmd, char **argv, int argc)
+{
+    cmd[0] = '\0';
+    // skip name alias and name
+    for (int i = 2; i < argc; i++)
+    {
         strcat(cmd, argv[i]);
-        if (i<argc-1){
+        if (i < argc - 1)
+        {
             strcat(cmd, " ");
         }
     }
@@ -460,8 +484,8 @@ void commands(char **argv, int argc, char *originalPath)
         exit(0);
     } // Handle getpath and setpath
     else if (strcmp(argv[0], "history") == 0)
- {
-        print_history(argv , argc);
+    {
+        print_history(argv, argc);
     }
     else if (strcmp(argv[0], "getpath") == 0)
     {
@@ -475,15 +499,19 @@ void commands(char **argv, int argc, char *originalPath)
     {
         changeDir(argv, argc);
     }
-    else if (strcmp(argv[0], "clearhistory") == 0){
-        clearHistory();
-    }else if (strcmp(argv[0], "alias")==0)
+    else if (strcmp(argv[0], "clearhistory") == 0)
     {
-        if (argc==1){
+        clearHistory();
+    }
+    else if (strcmp(argv[0], "alias") == 0)
+    {
+        if (argc == 1)
+        {
             printAliases();
             return;
         }
-        if (argc<3){
+        if (argc < 3)
+        {
             printf("Usage: alias <name> <command>\n");
             return;
         }
@@ -491,72 +519,108 @@ void commands(char **argv, int argc, char *originalPath)
         char command[MAX_ALIAS_COMMND];
         combineCommand(command, argv, argc);
         addAlias(argv[1], command);
-    }else if(strcmp(argv[0], "unalias")==0){
-        if (argc!=2){
+    }
+    else if (strcmp(argv[0], "unalias") == 0)
+    {
+        if (argc != 2)
+        {
             printf("Usage: unalias <name>\n");
             return;
         }
         removeAlias(argv[1]);
-    }else{
+    }
+    else
+    {
         execCommand(argv);
     }
 }
-//Stage 6 R1: Locate .hist_list in HOME Directory.
-void get_history_path(char *path){ // The path finding function.
-        char *home = getenv("HOME");
-        if(home == NULL){
-            path[0] = '\0';
-            return;
-        }
-        snprintf(path, MAX_LINE, "%s/.hist_list", home);
-    }
-
-    void load_history(){
-        char path[MAX_LINE];
-        get_history_path(path);
-        if(path[0] =='\0')
+// Stage 6 R1: Locate .hist_list in HOME Directory.
+void get_history_path(char *path)
+{ // The path finding function.
+    char *home = getenv("HOME");
+    if (home == NULL)
+    {
+        path[0] = '\0';
         return;
-
-        // Stage 6 R2: Load history from .hist_list on startup.
-        FILE *file = fopen(path, "r"); // Read mode
-
-        //Stage 6 R5: Handle missing/failed files.
-        if(file == NULL){ 
-            return;
-        }
-        // Stage 6 R4: Handle 512-character limit.
-          char line[MAX_LINE + 20];        
-           while(fgets(line, sizeof(line), file) != NULL) {         
-            line[strcspn(line, "\n")] = '\0'; //Remove newline.
-           
-
-           int num;
-           char cmd [MAX_LINE];
-           if (sscanf(line, "%d %511[^\n]", &num, cmd) == 2) { // Parse number and command.
-                add_history(cmd); // Add to history.
-            }
-        }
-      fclose(file);
+    }
+    snprintf(path, MAX_LINE, "%s/.hist_list", home);
 }
 
-void save_history(){
+void load_history()
+{
     char path[MAX_LINE];
     get_history_path(path);
-    if(path[0] =='\0')
+    if (path[0] == '\0')
         return;
 
-    FILE *file = fopen(path, "w"); //write mode
-    if (file == NULL){
+    // Stage 6 R2: Load history from .hist_list on startup.
+    FILE *file = fopen(path, "r"); // Read mode
+
+    // Stage 6 R5: Handle missing/failed files.
+    if (file == NULL)
+    {
+        return;
+    }
+    // Stage 6 R4: Handle 512-character limit.
+    char line[MAX_LINE + 20];
+    while (fgets(line, sizeof(line), file) != NULL)
+    {
+        line[strcspn(line, "\n")] = '\0'; // Remove newline.
+
+        int num;
+        char cmd[MAX_LINE];
+        if (sscanf(line, "%d %511[^\n]", &num, cmd) == 2)
+        {                     // Parse number and command.
+            add_history(cmd); // Add to history.
+        }
+    }
+    fclose(file);
+}
+
+void save_history()
+{
+    char path[MAX_LINE];
+    get_history_path(path);
+    if (path[0] == '\0')
+        return;
+
+    FILE *file = fopen(path, "w"); // write mode
+    if (file == NULL)
+    {
         fprintf(stderr, "Error: could not open history file for writing.\n");
         return;
     }
     int start = hist_count > HIST_SIZE ? hist_count - HIST_SIZE : 0;
 
-    for (int i = start; i < hist_count; i++){
+    for (int i = start; i < hist_count; i++)
+    {
         int index = i % HIST_SIZE;
-        fprintf(file,"%d %s\n",i - start + 1, history[index]);
+        fprintf(file, "%d %s\n", i - start + 1, history[index]);
     }
-fclose(file);
+    fclose(file);
+}
+
+int substituteCommand(char *input)
+{
+    char temp[MAX_LINE];
+    strcpy(temp, input);
+    char *first = strtok(temp, " \t\n");
+    if (first == NULL)
+    {
+        return 0;
+    }
+
+    int idx = findAlias(first);
+    if (idx != -1)
+    {
+        char newLine[MAX_LINE];
+        strcpy(newLine, aliases[idx].command);
+        char *command = input + strlen(first);
+        strcat(newLine, command);
+        strcpy(input, newLine);
+        return 1;
+    }
+    return 0;
 }
 
 int main(void)
@@ -577,7 +641,7 @@ int main(void)
     //  printf("%s\n", getcwd(s,100));
 
     load_history();
-    
+
     while (1)
     {
         printf("shell> ");
@@ -588,6 +652,8 @@ int main(void)
             cleanup(originalPath);
             break;
         }
+
+        substituteCommand(input);
 
         char original_line[MAX_LINE]; // command unmodified by strtok
         strcpy(original_line, input);
@@ -610,7 +676,8 @@ int main(void)
             exec_line[sizeof(exec_line) - 1] = '\0';
 
             argc = parse_input(exec_line, argv);
-            if (argc == 0) continue;
+            if (argc == 0)
+                continue;
 
             commands(argv, argc, originalPath);
             continue;
