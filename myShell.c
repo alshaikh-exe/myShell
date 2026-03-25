@@ -1,9 +1,7 @@
 /*
-Stage 7: Persistent history
-1- Add alias (done)
-2- remove alias (done)
-3- invoke alias
-4- print alias (done)
+FIXES:
+ - Alias substitution in history invocations 
+ - History numbering fix for full history 
 */
 
 #include <stdio.h>
@@ -216,11 +214,10 @@ void print_history(char **argv, int argc)
     }
     else
     {
-        fprintf(stderr, "myshell: Event not found: command takes no extra parameter.\n");
+        fprintf(stderr, "myshell: history command takes no extra parameter.\n");
         return;
     }
 }
-// Task 6 and 7 Implementation
 
 int history_exists(int cmd_no)
 {
@@ -344,16 +341,19 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         target_no = atoi(p);
     }
 
+        int start = hist_count > HIST_SIZE ? hist_count - HIST_SIZE : 0;
+        target_no = target_no + start;
+
     if (!history_exists(target_no))
     {
         // differentiate “out of range” vs “too old / overwritten”
         if (target_no < 1 || target_no > hist_count)
         {
-            fprintf(stderr, "Error: no such command in history: %d.\n", target_no);
+            fprintf(stderr, "Error: command \"%d\" doesn't exist (only %d commands enterd).\n",target_no,hist_count);
         }
         else
         {
-            fprintf(stderr, "Error: command %d is not in the last %d history entries.\n", target_no, HIST_SIZE);
+            fprintf(stderr, "Error: command is not in the last %d history entries.\n", HIST_SIZE);
         }
         return 0;
     }
@@ -512,7 +512,7 @@ void commands(char **argv, int argc, char *originalPath)
         }
         if (argc < 3)
         {
-            printf("Usage: alias <name> <command>\n");
+            printf("Error: alias requires a name and a command. Usage: alias <name> <command>\n");
             return;
         }
 
@@ -524,7 +524,7 @@ void commands(char **argv, int argc, char *originalPath)
     {
         if (argc != 2)
         {
-            printf("Usage: unalias <name>\n");
+            printf("Error: unalias requires exactly one argument. Usage: unalias <name>\n");
             return;
         }
         removeAlias(argv[1]);
@@ -653,10 +653,12 @@ int main(void)
             break;
         }
 
-        substituteCommand(input);
-
-        char original_line[MAX_LINE]; // command unmodified by strtok
+        char original_line[MAX_LINE]; //original command saved including alias
         strcpy(original_line, input);
+        
+
+        substituteCommand(input);
+        
 
         int is_history = is_history_command(original_line); // check raw line
 
@@ -670,6 +672,9 @@ int main(void)
                 continue;
             }
 
+            // parse alias (if alias was invoked)
+            substituteCommand(resolved);
+            
             // parse and execute the resolved command (do NOT store in history)
             char exec_line[MAX_LINE];
             strncpy(exec_line, resolved, sizeof(exec_line) - 1);
