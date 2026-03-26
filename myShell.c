@@ -1,6 +1,7 @@
 /*
 Stage 8:
  - Add get_aliases_path
+ - Add save_aliases function
 */
 
 #include <stdio.h>
@@ -636,6 +637,30 @@ void get_aliases_path(char* path)
     snprintf(path, MAX_LINE, "%s/.aliases",home);
 }
 
+void save_aliases()
+{
+    char path[MAX_LINE];
+    get_aliases_path(path);
+
+    if(*path == '\0')
+    {
+        return;
+    }
+
+    FILE* file = fopen(path, "w");
+    if (file == NULL)
+    {
+        fprintf(stderr,"myshell: error: file not found");
+        return;
+    }
+
+    for(int idx=0; idx<= aliaseCount; idx++)
+    {
+        fprintf(file,"%s %s\n", aliases[idx].name, aliases[idx].command);
+    }
+
+    fclose(file);
+}
 
 
 
