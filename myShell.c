@@ -2,6 +2,7 @@
 Stage 8:
  - Add get_aliases_path
  - Add save_aliases function
+ - Add load_aliases function
 */
 
 #include <stdio.h>
@@ -654,7 +655,7 @@ void save_aliases()
         return;
     }
 
-    for(int idx=0; idx<= aliaseCount; idx++)
+    for(int idx = 0; idx < aliaseCount; idx++)
     {
         fprintf(file,"%s %s\n", aliases[idx].name, aliases[idx].command);
     }
@@ -662,6 +663,36 @@ void save_aliases()
     fclose(file);
 }
 
+void load_aliases() 
+{
+    char path[MAX_LINE];
+    get_aliases_path(path);
+    if(*path == '\0')
+    {
+        return;
+    }
+
+    FILE* file = fopen(path, "r");
+    if (file == NULL) 
+    {
+        return;
+    }
+
+    char line[MAX_LINE];
+    while(fgets(line,sizeof(line),file) != NULL)
+    {
+        char name[MAX_ALIAS_NAME];
+        char cmd[MAX_ALIAS_COMMND];
+       if (sscanf(line, "%s %[^\n]", name, cmd) == 2)
+       {
+         addAlias(name, cmd);
+       }
+            
+    }
+
+    fclose(file);
+    return;
+}
 
 
 
