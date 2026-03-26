@@ -1,7 +1,6 @@
 /*
-FIXES:
- - Alias substitution in history invocations 
- - History numbering fix for full history 
+Stage 8:
+ - Add get_aliases_path
 */
 
 #include <stdio.h>
@@ -622,6 +621,24 @@ int substituteCommand(char *input)
     }
     return 0;
 }
+
+//Stage 8 
+void get_aliases_path(char* path)
+{
+    char* home = getenv("HOME");
+
+    if (home == NULL)
+    { 
+        *path = '\0';
+        return;
+    }
+
+    snprintf(path, MAX_LINE, "%s/.aliases",home);
+}
+
+
+
+
 
 int main(void)
 {
