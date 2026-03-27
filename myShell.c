@@ -1,8 +1,11 @@
 /*
-Stage 8:
+Stage 8: (done)
  - Add get_aliases_path
  - Add save_aliases function
  - Add load_aliases function
+ - Integrate load_aliases and save_aliases into main
+FIXES:
+ - history invocation (!-0 invokes last command)
 */
 
 #include <stdio.h>
@@ -34,8 +37,12 @@ char history[HIST_SIZE][MAX_LINE];
 
 int hist_count = 0; // number of commands entered
 int hist_next = 0;  // circular pointer
+
+
+
 void print_history(char **argv, int argc);
 void save_history();
+void save_aliases();
 
 // -- Stage 2 Implementation
 
@@ -315,12 +322,17 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         // per test note: !-0 should execute the last command in history
         if (n == 0)
         {
-            fprintf(stderr, "myshell: Event not found: '%s'. Use !-<number>.\n", token);
-            return 0;
+            target_no = hist_count;
         }
+        // {
+        //     fprintf(stderr, "myshell: Event not found: '%s'. Use !-<number>.\n", token);
+        //     return 0;
+        // }
         else
+        {
             target_no = (hist_count + 1) - n; // "current command number" is hist_count+1
-    }
+        }
+}
     // case 3: !n
     else
     {
@@ -340,10 +352,11 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         }
 
         target_no = atoi(p);
-    }
-
         int start = hist_count > HIST_SIZE ? hist_count - HIST_SIZE : 0;
         target_no = target_no + start;
+    }
+
+    
 
     if (!history_exists(target_no))
     {
@@ -481,6 +494,7 @@ void commands(char **argv, int argc, char *originalPath)
     if (strcmp(argv[0], "exit") == 0)
     {
         save_history();
+        save_aliases();
         cleanup(originalPath);
         exit(0);
     } // Handle getpath and setpath
@@ -714,6 +728,7 @@ int main(void)
     //  printf("%s\n", getcwd(s,100));
 
     load_history();
+    load_aliases();
 
     while (1)
     {
@@ -722,6 +737,7 @@ int main(void)
         if (fgets(input, sizeof(input), stdin) == NULL)
         {
             save_history();
+            save_aliases();
             cleanup(originalPath);
             break;
         }
