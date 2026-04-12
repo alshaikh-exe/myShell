@@ -1,11 +1,13 @@
 /*
-Stage 8: (done)
- - Add get_aliases_path
- - Add save_aliases function
- - Add load_aliases function
- - Integrate load_aliases and save_aliases into main
-FIXES:
- - history invocation (!-0 invokes last command)
+FINAL STAGE!!!
+ - Modify Input Handling Loop to Support History Invocation.
+ - Implement alias to alias mapping.
+ - Integrate History Invocations in Aliases.
+ - Add Recursive History Updates .
+ - Implement Cycle Detection.
+ - Develop Parameter Concatenation Logic.
+ FIXES:
+ 
 */
 
 #include <stdio.h>
@@ -707,6 +709,41 @@ void load_aliases()
     fclose(file);
     return;
 }
+
+int expand_command(char *input){
+    int expansions = 0;
+    int max_expansions = 5; 
+    int changed = 1;
+}
+
+int expand_command(char *input){
+    int expansions = 0;
+    int max_expansions = 5;
+    int changed = 1;
+
+    //R1: Modify Input Handling Loop.
+    while(changed && expansions < max_expansions) {
+        changed = 0;
+
+        char *start = input;
+        while(*start == '' || *start == '\t') {
+            start++;
+        }
+        if(*start == '\0') break;
+
+        char temp[MAX_LINE];
+        strcpy(temp, input);
+        char *first = strtok(temp, " \t\n");
+        if(first == NULL) break;
+}
+         if(expansions >= max_expansions){
+            fprintf(stderr, "Error: Recursive alias or history cycle detected. \n");
+            return 0;
+}
+return 1;
+}
+
+
 
 
 
