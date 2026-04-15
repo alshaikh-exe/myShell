@@ -744,9 +744,24 @@ int expand_command(char *input){
              else{
                 return 0;
              }
-
-         }
-       
+            }
+             //R2: Implement alias to alias mapping.
+              int idx = findAlias(first);
+              if(idx != -1) { 
+             char newLine[MAX_LINE];             
+             strcpy(newLine, aliases[idx].command);                          
+             char *rest = start + strlen(first);             
+             strcat (newLine, rest);              
+             strcpy(input, newLine);             
+             changed = 1;             
+             expansions++;             
+             continue;         
+            }     
+        }          
+        if(expansions >= max_expansions) {         
+        fprintf(stderr, "Error:  Recursive alias or cycle detected.\n");         
+        return 0;     }     
+        return 1; }       
 
 
     
