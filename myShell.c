@@ -802,6 +802,19 @@ int main(void)
             break;
         }
 
+        char original_line[MAX_LINE];         
+        strcpy(original_line, input);          
+        if(!expand_command(input)){             
+            continue;          
+        }           
+        argc = parse_input(input, argv);           
+        if(argc ==0){             
+            continue;          
+        }          
+        if(original_line[0] != '!' && original_line[0] != '\n'){             
+            add_history(original_line);}           
+            commands(argv, argc, originalPath);
+
         }
         substituteCommand(input);
         
