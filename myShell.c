@@ -710,11 +710,7 @@ void load_aliases()
     return;
 }
 
-int expand_command(char *input){
-    int expansions = 0;
-    int max_expansions = 5; 
-    int changed = 1;
-}
+// Stage 9
 
 int expand_command(char *input){
     int expansions = 0;
@@ -726,22 +722,34 @@ int expand_command(char *input){
         changed = 0;
 
         char *start = input;
-        while(*start == '' || *start == '\t') {
+        while(*start == ' ' || *start == '\t') {
             start++;
         }
         if(*start == '\0') break;
 
         char temp[MAX_LINE];
-        strcpy(temp, input);
+        strcpy(temp, start);
         char *first = strtok(temp, " \t\n");
         if(first == NULL) break;
-}
-         if(expansions >= max_expansions){
-            fprintf(stderr, "Error: Recursive alias or history cycle detected. \n");
-            return 0;
-}
-return 1;
-}
+
+        //R3: Integrate History Invocations in Aliases.
+         if(first[0] == '!'){
+            char resolved[MAX_LINE];
+            if(resolve_history_invocation(start, resolved, sizeof(resolved))) {
+                strcpy(input, resolved);
+                changed = 1;
+                expansions++;
+                continue;
+             }
+             else{
+                return 0;
+             }
+
+         }
+       
+
+
+    
 
 
 
@@ -781,8 +789,23 @@ int main(void)
 
         char original_line[MAX_LINE]; //original command saved including alias
         strcpy(original_line, input);
-        
 
+        if(!expand_command(input)){
+            continue;
+         }
+
+         argc = parse_input(input, argv);
+
+         if(argc ==0){
+            continue;
+         }
+         if(original_line[0] != '!' && original_line[0] != '\n'){
+            add_history(original_line);
+         }
+
+         commands(argv, argc, originalPath);
+
+        }
         substituteCommand(input);
         
 
