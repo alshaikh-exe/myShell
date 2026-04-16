@@ -67,14 +67,6 @@ int parse_input(char *line, char *argv[])
         argc++;
         token = strtok(NULL, " \t\n|><&;"); /*get next token*/
     }
-    /*
-        ex:ls -la /home
-        token 0 = "ls", store in argv[0].
-
-        token 1 = "-la", store in argv[1].
-
-        token 2 = "/home", store in argv[2].
-    */
 
     argv[argc] = NULL; // NULL-terminate argv
     return (argc);     // return number of tokens
@@ -387,15 +379,6 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         snprintf(out, outsz, "%s %s", base, rest);
     }
 
-    // ensure  command is not itself a history invocation
-    while (*out == ' ' || *out == '\t')
-        out++;
-    if (out[0] == '!')
-    {
-        fprintf(stderr, "Error: history invocation cannot resolve to another history invocation.\n");
-        return 0;
-    }
-
     return 1;
 }
 
@@ -611,29 +594,6 @@ void save_history()
         fprintf(file, "%d %s\n", i - start + 1, history[index]);
     }
     fclose(file);
-}
-
-int substituteCommand(char *input)
-{
-    char temp[MAX_LINE];
-    strcpy(temp, input);
-    char *first = strtok(temp, " \t\n");
-    if (first == NULL)
-    {
-        return 0;
-    }
-
-    int idx = findAlias(first);
-    if (idx != -1)
-    {
-        char newLine[MAX_LINE];
-        strcpy(newLine, aliases[idx].command);
-        char *command = input + strlen(first);
-        strcat(newLine, command);
-        strcpy(input, newLine);
-        return 1;
-    }
-    return 0;
 }
 
 // Stage 8
