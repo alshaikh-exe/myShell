@@ -757,6 +757,7 @@ int expand_command(char *input){
              expansions++;             
              continue;         
             }     
+            break;
         }          
         if(expansions >= max_expansions) {         
         fprintf(stderr, "Error:  Recursive alias or cycle detected.\n");         
