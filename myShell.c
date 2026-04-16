@@ -803,7 +803,8 @@ int main(void)
         }
 
         char original_line[MAX_LINE];         
-        strcpy(original_line, input);          
+        strcpy(original_line, input);
+        original_line[strcspn(original_line, "\n")] = '\0';          
         if(!expand_command(input)){             
             continue;          
         }           
