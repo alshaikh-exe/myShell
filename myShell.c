@@ -7,7 +7,7 @@ FINAL STAGE!!!
  - Implement Cycle Detection.
  - Develop Parameter Concatenation Logic.
  FIXES:
- 
+
 */
 
 #include <stdio.h>
@@ -39,8 +39,6 @@ char history[HIST_SIZE][MAX_LINE];
 
 int hist_count = 0; // number of commands entered
 int hist_next = 0;  // circular pointer
-
-
 
 void print_history(char **argv, int argc);
 void save_history();
@@ -334,7 +332,7 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         {
             target_no = (hist_count + 1) - n; // "current command number" is hist_count+1
         }
-}
+    }
     // case 3: !n
     else
     {
@@ -358,14 +356,12 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         target_no = target_no + start;
     }
 
-    
-
     if (!history_exists(target_no))
     {
         // differentiate “out of range” vs “too old / overwritten”
         if (target_no < 1 || target_no > hist_count)
         {
-            fprintf(stderr, "Error: command \"%d\" doesn't exist (only %d commands entered).\n",target_no,hist_count);
+            fprintf(stderr, "Error: command \"%d\" doesn't exist (only %d commands entered).\n", target_no, hist_count);
         }
         else
         {
@@ -640,18 +636,18 @@ int substituteCommand(char *input)
     return 0;
 }
 
-//Stage 8 
-void get_aliases_path(char* path)
+// Stage 8
+void get_aliases_path(char *path)
 {
-    char* home = getenv("HOME");
+    char *home = getenv("HOME");
 
     if (home == NULL)
-    { 
+    {
         *path = '\0';
         return;
     }
 
-    snprintf(path, MAX_LINE, "%s/.aliases",home);
+    snprintf(path, MAX_LINE, "%s/.aliases", home);
 }
 
 void save_aliases()
@@ -659,51 +655,50 @@ void save_aliases()
     char path[MAX_LINE];
     get_aliases_path(path);
 
-    if(*path == '\0')
+    if (*path == '\0')
     {
         return;
     }
 
-    FILE* file = fopen(path, "w");
+    FILE *file = fopen(path, "w");
     if (file == NULL)
     {
-        fprintf(stderr,"myshell: error: file not found");
+        fprintf(stderr, "myshell: error: file not found");
         return;
     }
 
-    for(int idx = 0; idx < aliaseCount; idx++)
+    for (int idx = 0; idx < aliaseCount; idx++)
     {
-        fprintf(file,"%s %s\n", aliases[idx].name, aliases[idx].command);
+        fprintf(file, "%s %s\n", aliases[idx].name, aliases[idx].command);
     }
 
     fclose(file);
 }
 
-void load_aliases() 
+void load_aliases()
 {
     char path[MAX_LINE];
     get_aliases_path(path);
-    if(*path == '\0')
+    if (*path == '\0')
     {
         return;
     }
 
-    FILE* file = fopen(path, "r");
-    if (file == NULL) 
+    FILE *file = fopen(path, "r");
+    if (file == NULL)
     {
         return;
     }
 
     char line[MAX_LINE];
-    while(fgets(line,sizeof(line),file) != NULL)
+    while (fgets(line, sizeof(line), file) != NULL)
     {
         char name[MAX_ALIAS_NAME];
         char cmd[MAX_ALIAS_COMMND];
-       if (sscanf(line, "%s %[^\n]", name, cmd) == 2)
-       {
-         addAlias(name, cmd);
-       }
-            
+        if (sscanf(line, "%s %[^\n]", name, cmd) == 2)
+        {
+            addAlias(name, cmd);
+        }
     }
 
     fclose(file);
@@ -712,64 +707,69 @@ void load_aliases()
 
 // Stage 9
 
-int expand_command(char *input){
+int expand_command(char *input)
+{
     int expansions = 0;
     int max_expansions = 5;
     int changed = 1;
 
-    //R1: Modify Input Handling Loop.
-    while(changed && expansions < max_expansions) {
+    // R1: Modify Input Handling Loop.
+    while (changed && expansions < max_expansions)
+    {
         changed = 0;
 
         char *start = input;
-        while(*start == ' ' || *start == '\t') {
+        while (*start == ' ' || *start == '\t')
+        {
             start++;
         }
-        if(*start == '\0') break;
+        if (*start == '\0')
+            break;
 
         char temp[MAX_LINE];
         strcpy(temp, start);
         char *first = strtok(temp, " \t\n");
-        if(first == NULL) break;
+        if (first == NULL)
+            break;
 
-        //R3: Integrate History Invocations in Aliases.
-         if(first[0] == '!'){
+        // R3: Integrate History Invocations in Aliases.
+        if (first[0] == '!')
+        {
             char resolved[MAX_LINE];
-            if(resolve_history_invocation(start, resolved, sizeof(resolved))) {
+            if (resolve_history_invocation(start, resolved, sizeof(resolved)))
+            {
                 strcpy(input, resolved);
                 changed = 1;
                 expansions++;
                 continue;
-             }
-             else{
-                return 0;
-             }
             }
-             //R2: Implement alias to alias mapping.
-              int idx = findAlias(first);
-              if(idx != -1) { 
-             char newLine[MAX_LINE];             
-             strcpy(newLine, aliases[idx].command);                          
-             char *rest = start + strlen(first);             
-             strcat (newLine, rest);              
-             strcpy(input, newLine);             
-             changed = 1;             
-             expansions++;             
-             continue;         
-            }     
-            break;
-        }          
-        if(expansions >= max_expansions) {         
-        fprintf(stderr, "Error:  Recursive alias or cycle detected.\n");         
-        return 0;     }     
-        return 1; }       
-
-
-    
-
-
-
-
+            else
+            {
+                return 0;
+            }
+        }
+        // R2: Implement alias to alias mapping.
+        int idx = findAlias(first);
+        if (idx != -1)
+        {
+            char newLine[MAX_LINE];
+            strcpy(newLine, aliases[idx].command);
+            char *rest = start + strlen(first);
+            strcat(newLine, rest);
+            strcpy(input, newLine);
+            changed = 1;
+            expansions++;
+            continue;
+        }
+        break;
+    }
+    if (expansions >= max_expansions)
+    {
+        fprintf(stderr, "Error:  Recursive alias or cycle detected.\n");
+        return 0;
+    }
+    return 1;
+}
 
 int main(void)
 {
@@ -803,19 +803,22 @@ int main(void)
             break;
         }
 
-        char original_line[MAX_LINE];         
+        char original_line[MAX_LINE];
         strcpy(original_line, input);
-        original_line[strcspn(original_line, "\n")] = '\0';          
-        if(!expand_command(input)){             
-            continue;          
-        }           
-        argc = parse_input(input, argv);           
-        if(argc ==0){             
-            continue;          
-        }          
-        if(original_line[0] != '!' && original_line[0] != '\n'){             
-            add_history(original_line);}           
-            commands(argv, argc, originalPath);
-
+        original_line[strcspn(original_line, "\n")] = '\0';
+        if (!expand_command(input))
+        {
+            continue;
         }
+        argc = parse_input(input, argv);
+        if (argc == 0)
+        {
+            continue;
+        }
+        if (original_line[0] != '!' && original_line[0] != '\n')
+        {
+            add_history(original_line);
+        }
+        commands(argv, argc, originalPath);
+    }
 }
