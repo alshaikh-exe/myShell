@@ -365,7 +365,7 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         // differentiate “out of range” vs “too old / overwritten”
         if (target_no < 1 || target_no > hist_count)
         {
-            fprintf(stderr, "Error: command \"%d\" doesn't exist (only %d commands enterd).\n",target_no,hist_count);
+            fprintf(stderr, "Error: command \"%d\" doesn't exist (only %d commands entered).\n",target_no,hist_count);
         }
         else
         {
