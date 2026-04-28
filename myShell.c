@@ -1,24 +1,18 @@
-/*
-FINAL STAGE!!!
- - Modify Input Handling Loop to Support History Invocation.
- - Implement alias to alias mapping.
- - Integrate History Invocations in Aliases.
- - Add Recursive History Updates .
- - Implement Cycle Detection.
- - Develop Parameter Concatenation Logic.
- FIXES:
-
-*/
-
+/* =========================
+ * Imports / Libraries
+ * ========================= */
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>    // fork
-#include <sys/types.h> // pid_t
-#include <sys/wait.h>  // wait
-#include <stdlib.h>    // exit
-#include <errno.h>     //strerror and errno
-#include <ctype.h>     // isdigit
+#include <unistd.h>    
+#include <sys/types.h> 
+#include <sys/wait.h> 
+#include <stdlib.h>    
+#include <errno.h>   
+#include <ctype.h>   
 
+/* =========================
+ * Constants / Macros
+ * ========================= */
 #define MAX_ARGS 50
 #define HIST_SIZE 20
 #define MAX_LINE 512
@@ -37,27 +31,27 @@ int aliaseCount = 0;
 
 char history[HIST_SIZE][MAX_LINE];
 
-int hist_count = 0; // number of commands entered
-int hist_next = 0;  // circular pointer
+int hist_count = 0; 
+int hist_next = 0;  
 
 void print_history(char **argv, int argc);
 void save_history();
 void save_aliases();
 
-// -- Stage 2 Implementation
 
+/* parses a raw input line into argv tokens for later execution. */
 int parse_input(char *line, char *argv[])
 {
     char *token;
-    int argc = 0; // count for tokens
+    int argc = 0; 
 
     if (line == NULL)
-        return 0; /*incase line returns NUll,ex user ctrl+d*/
+        return 0;
 
-    line[strcspn(line, "\n")] = 0; /*removes the newline that fgets takes by accident*/
+    line[strcspn(line, "\n")] = 0;
 
     if (strlen(line) == 0)
-        return 0; /*incase line is empty*/
+        return 0; 
 
     token = strtok(line, " \t\n|><&;");
 
@@ -65,35 +59,35 @@ int parse_input(char *line, char *argv[])
     {
         argv[argc] = token;
         argc++;
-        token = strtok(NULL, " \t\n|><&;"); /*get next token*/
+        token = strtok(NULL, " \t\n|><&;"); 
     }
 
-    argv[argc] = NULL; // NULL-terminate argv
-    return (argc);     // return number of tokens
+    argv[argc] = NULL; 
+    return (argc);     
 }
-
+/* forks and executes an external program using execvp then waits for it. */
 void execCommand(char *argv[])
 {
-    pid_t pid = fork(); // process cloned
+    pid_t pid = fork(); 
     if (pid < 0)
     {
         perror("Fork Failed");
     }
     else if (pid == 0)
-    { // -- Child Process --
+    { 
         // replace new child process with program passed by the user
         execvp(argv[0], argv);
-        // perror("execvp");
+     
         fprintf(stderr, "%s command not found\n", argv[0]);
-        exit(1); // kill the child
+        exit(1); 
     }
     else
     {
-        // parent process : wait for the child to finish
+
         wait(NULL);
     }
 }
-
+/* prints the current PATH value or reports invalid usage. */
 void getpath(char **args, int argc)
 {
     char *path = getenv("PATH");
@@ -110,7 +104,7 @@ void getpath(char **args, int argc)
         printf("Error: getpath takes no parameters.\n");
     }
 }
-
+/* changes the PATH environment variable after checking the argument count. */
 void setpath(char **args, int argc)
 {
     if (argc == 1)
@@ -129,7 +123,7 @@ void setpath(char **args, int argc)
         printf("Error: too many arguments passed.\n");
     }
 }
-
+/* restores the original PATH and releases saved memory before exit. */
 void cleanup(char *originalPath)
 {
     if (originalPath != NULL)
@@ -139,7 +133,7 @@ void cleanup(char *originalPath)
         free(originalPath);
     }
 }
-
+/* changes the current directory to HOME or to the directory given by the user. */
 void changeDir(char **argv, int argc)
 {
     char *home = getenv("HOME");
@@ -163,36 +157,36 @@ void changeDir(char **argv, int argc)
     }
 }
 
-// Stage 5
+/* returns 1 when the input line starts with a history invocation. */
 int is_history_command(char *line)
 {
     if (line[0] == '!')
         return 1;
     return 0;
 }
-
+/* clears all stored history entries and resets the circular buffer state. */
 void clearHistory()
 {
 
     for (int i = 0; i < HIST_SIZE; i++)
     {
-        history[i][0] = '\0'; // empty string
+        history[i][0] = '\0'; 
     }
     hist_count = 0;
     hist_next = 0;
 }
-
+/* adds a command line to the circular history buffer unless it is empty or a history shortcut. */
 void add_history(char *line)
 {
     if (line[0] == '!' || line[0] == '\0')
-        return;
+        return;/* Store commands in a circular buffer so the oldest entry is overwritten after 20 commands. */
 
     strcpy(history[hist_next], line);
 
-    hist_next = (hist_next + 1) % HIST_SIZE; // count = (count+1) % 20
+    hist_next = (hist_next + 1) % HIST_SIZE; 
     hist_count++;
 }
-
+/* prints the stored history entries in ascending order. */
 void print_history(char **argv, int argc)
 {
     if (argc == 1)
@@ -203,7 +197,7 @@ void print_history(char **argv, int argc)
             printf("History is empty\n");
             return;
         }
-
+        /* Start from the oldest available entry so history prints in correct chronological order. */
         int start = hist_count > HIST_SIZE ? hist_count - HIST_SIZE : 0;
 
         for (int i = start; i < hist_count; i++)
@@ -218,7 +212,7 @@ void print_history(char **argv, int argc)
         return;
     }
 }
-
+/* checks whether a history command number is still available in the buffer. */
 int history_exists(int cmd_no)
 {
     if (hist_count <= 0)
@@ -226,7 +220,7 @@ int history_exists(int cmd_no)
     if (cmd_no < 1 || cmd_no > hist_count)
         return 0;
 
-    // if history is full (more than HIST_SIZE commands ever entered),
+    /* Reject numbers that are outside the active history window. */
     if (hist_count > HIST_SIZE)
     {
         int oldest_available = hist_count - HIST_SIZE + 1;
@@ -235,8 +229,7 @@ int history_exists(int cmd_no)
     }
     return 1;
 }
-
-/*
+/* copies a stored history command into the output buffer if it exists. */
  * copies the command line for history command number cmd_no into out (null-terminated).
  * returns 1 on success 0 on failure.
  */
@@ -244,7 +237,7 @@ int get_history_command(int cmd_no, char *out, size_t outsz)
 {
     if (!history_exists(cmd_no))
         return 0;
-
+    /* map the history command number to the circular-buffer slot. */
     int index = (cmd_no - 1) % HIST_SIZE;
     strncpy(out, history[index], outsz - 1);
     out[outsz - 1] = '\0';
@@ -252,15 +245,15 @@ int get_history_command(int cmd_no, char *out, size_t outsz)
     out[strcspn(out, "\n")] = '\0';
     return 1;
 }
-
+/* resolves !!, !n, and !-n into the original command line to execute. */
 int resolve_history_invocation(const char *line, char *out, size_t outsz)
 {
-    // skip leading whitespace
+
     while (*line == ' ' || *line == '\t')
         line++;
 
     if (*line != '!')
-        return 0; // not a history invocation
+        return 0; 
 
     if (hist_count == 0)
     {
@@ -268,7 +261,7 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         return 0;
     }
 
-    // extract first token (up to whitespace)
+
     char token[MAX_LINE];
     size_t i = 0;
     while (line[i] != '\0' && line[i] != ' ' && line[i] != '\t' && line[i] != '\n' && i < sizeof(token) - 1)
@@ -278,20 +271,20 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
     }
     token[i] = '\0';
 
-    // the "rest" becomes extra parameters
+
     const char *rest = line + i;
     while (*rest == ' ' || *rest == '\t')
         rest++;
 
     int target_no = -1;
 
-    // case 1: !!
-    if (strcmp(token, "!!") == 0)
+  
+    if (strcmp(token, "!!") == 0) /* handle !! as the most recent command. */
     {
-        target_no = hist_count; // last command entered into history
+        target_no = hist_count; 
     }
 
-    // case 2: !-n
+    /* handle !-n as a relative lookup from the current history count. */
     else if (strncmp(token, "!-", 2) == 0)
     {
         const char *p = token + 2;
@@ -311,21 +304,18 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
 
         int n = atoi(p);
 
-        // per test note: !-0 should execute the last command in history
+
         if (n == 0)
         {
             target_no = hist_count;
         }
-        // {
-        //     fprintf(stderr, "myshell: Event not found: '%s'. Use !-<number>.\n", token);
-        //     return 0;
-        // }
+       /* handle !n as an absolute history number. */
         else
         {
-            target_no = (hist_count + 1) - n; // "current command number" is hist_count+1
+            target_no = (hist_count + 1) - n; 
         }
     }
-    // case 3: !n
+ 
     else
     {
         const char *p = token + 1;
@@ -350,7 +340,7 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
 
     if (!history_exists(target_no))
     {
-        // differentiate “out of range” vs “too old / overwritten”
+
         if (target_no < 1 || target_no > hist_count)
         {
             fprintf(stderr, "Error: command \"%d\" doesn't exist (only %d commands entered).\n", target_no, hist_count);
@@ -368,22 +358,22 @@ int resolve_history_invocation(const char *line, char *out, size_t outsz)
         fprintf(stderr, "Error: failed to retrieve command %d from history.\n", target_no);
         return 0;
     }
-    if (*rest == '\0')
+    if (*rest == '\0')/* append any extra arguments after the resolved history command. */
     {
         strncpy(out, base, outsz - 1);
         out[outsz - 1] = '\0';
     }
     else
     {
-        // base + space + rest
-        snprintf(out, outsz, "%s %s", base, rest);
+  
+        snprintf(out, outsz, "%s %s", base, rest);/* rebuild the command line using the stored command plus the new tail arguments. */
     }
 
     return 1;
 }
-
+/* searches the alias table and returns its index or -1 if it does not exist. */
 int findAlias(const char *name)
-{
+{   /* search the alias table for a matching name. */
     for (int i = 0; i < aliaseCount; i++)
     {
         if (strcmp(aliases[i].name, name) == 0)
@@ -393,7 +383,7 @@ int findAlias(const char *name)
     }
     return -1;
 }
-
+/* prints all currently defined aliases. */
 void printAliases()
 {
     if (aliaseCount == 0)
@@ -407,7 +397,7 @@ void printAliases()
         printf("Alias: \"%s\" => \"%s\"\n", aliases[i].name, aliases[i].command);
     }
 }
-
+/* adds a new alias or replaces an existing alias with the same name. */
 void addAlias(const char *name, const char *command)
 {
     int idx = findAlias(name);
@@ -436,7 +426,7 @@ void addAlias(const char *name, const char *command)
     aliaseCount++;
     printf("Alias \"%s\" has been successfully added!\n", name);
 }
-
+/* removes an alias and shifts the remaining entries to keep the array packed. */
 void removeAlias(const char *name)
 {
     int idx = findAlias(name);
@@ -446,7 +436,7 @@ void removeAlias(const char *name)
         printf("Alias \"%s\" not found!\n", name);
         return;
     }
-
+    /* shift aliases left to keep the array compact after removal. */
     for (int i = idx; i < aliaseCount - 1; i++)
     {
         aliases[i] = aliases[i + 1];
@@ -455,12 +445,12 @@ void removeAlias(const char *name)
     aliaseCount--;
     printf("Alias \"%s\" has been removed\n", name);
 }
-
+/* combines alias command arguments into one command string. */
 void combineCommand(char *cmd, char **argv, int argc)
 {
     cmd[0] = '\0';
-    // skip name alias and name
-    for (int i = 2; i < argc; i++)
+
+    for (int i = 2; i < argc; i++)/* join the alias command tokens into one space-separated string. */
     {
         strcat(cmd, argv[i]);
         if (i < argc - 1)
@@ -469,7 +459,7 @@ void combineCommand(char *cmd, char **argv, int argc)
         }
     }
 }
-
+/* dispatches built-in commands or forwards unknown commands to execution. */
 void commands(char **argv, int argc, char *originalPath)
 {
     if (strcmp(argv[0], "exit") == 0)
@@ -478,7 +468,7 @@ void commands(char **argv, int argc, char *originalPath)
         save_aliases();
         cleanup(originalPath);
         exit(0);
-    } // Handle getpath and setpath
+    } 
     else if (strcmp(argv[0], "history") == 0)
     {
         print_history(argv, argc);
@@ -530,9 +520,9 @@ void commands(char **argv, int argc, char *originalPath)
         execCommand(argv);
     }
 }
-// Stage 6 R1: Locate .hist_list in HOME Directory.
+/* builds the full file path for the persistent history file in the user's home directory. */
 void get_history_path(char *path)
-{ // The path finding function.
+{ 
     char *home = getenv("HOME");
     if (home == NULL)
     {
@@ -541,7 +531,7 @@ void get_history_path(char *path)
     }
     snprintf(path, MAX_LINE, "%s/.hist_list", home);
 }
-
+/* loads command history from the history file if it exists. */
 void load_history()
 {
     char path[MAX_LINE];
@@ -549,30 +539,30 @@ void load_history()
     if (path[0] == '\0')
         return;
 
-    // Stage 6 R2: Load history from .hist_list on startup.
-    FILE *file = fopen(path, "r"); // Read mode
 
-    // Stage 6 R5: Handle missing/failed files.
+    FILE *file = fopen(path, "r"); 
+
+ 
     if (file == NULL)
     {
         return;
     }
-    // Stage 6 R4: Handle 512-character limit.
+
     char line[MAX_LINE + 20];
     while (fgets(line, sizeof(line), file) != NULL)
     {
-        line[strcspn(line, "\n")] = '\0'; // Remove newline.
+        line[strcspn(line, "\n")] = '\0'; 
 
         int num;
         char cmd[MAX_LINE];
-        if (sscanf(line, "%d %511[^\n]", &num, cmd) == 2)
-        {                     // Parse number and command.
-            add_history(cmd); // Add to history.
+        if (sscanf(line, "%d %511[^\n]", &num, cmd) == 2)/* ignore bad lines instead of crashing on bad file contents. */
+        {                
+            add_history(cmd);
         }
     }
     fclose(file);
 }
-
+/* saves the current in-memory history entries to the history file. */
 void save_history()
 {
     char path[MAX_LINE];
@@ -580,7 +570,7 @@ void save_history()
     if (path[0] == '\0')
         return;
 
-    FILE *file = fopen(path, "w"); // write mode
+    FILE *file = fopen(path, "w"); 
     if (file == NULL)
     {
         fprintf(stderr, "Error: could not open history file for writing.\n");
@@ -588,7 +578,7 @@ void save_history()
     }
     int start = hist_count > HIST_SIZE ? hist_count - HIST_SIZE : 0;
 
-    for (int i = start; i < hist_count; i++)
+    for (int i = start; i < hist_count; i++)/* overwrite the previous file so the saved state matches the current shell state. */
     {
         int index = i % HIST_SIZE;
         fprintf(file, "%d %s\n", i - start + 1, history[index]);
@@ -596,7 +586,7 @@ void save_history()
     fclose(file);
 }
 
-// Stage 8
+/* builds the full file path for the persistent alias file in the user's home directory. */
 void get_aliases_path(char *path)
 {
     char *home = getenv("HOME");
@@ -609,7 +599,7 @@ void get_aliases_path(char *path)
 
     snprintf(path, MAX_LINE, "%s/.aliases", home);
 }
-
+/* saves all currently defined aliases to the alias file. */
 void save_aliases()
 {
     char path[MAX_LINE];
@@ -634,7 +624,7 @@ void save_aliases()
 
     fclose(file);
 }
-
+/* loads alias entries from the alias file if it exists. */
 void load_aliases()
 {
     char path[MAX_LINE];
@@ -665,16 +655,15 @@ void load_aliases()
     return;
 }
 
-// Stage 9
-
+/* replaces aliases and history shortcuts until the command no longer changes. */
 int expand_command(char *input)
 {
     int expansions = 0;
     int max_expansions = 5;
     int changed = 1;
 
-    // R1: Modify Input Handling Loop.
-    while (changed && expansions < max_expansions)
+
+    while (changed && expansions < max_expansions)/* keep resolving aliases and history references until no more substitutions apply. */
     {
         changed = 0;
 
@@ -692,7 +681,7 @@ int expand_command(char *input)
         if (first == NULL)
             break;
 
-        // R3: Integrate History Invocations in Aliases.
+    
         if (first[0] == '!')
         {
             char resolved[MAX_LINE];
@@ -708,8 +697,8 @@ int expand_command(char *input)
                 return 0;
             }
         }
-        // R2: Implement alias to alias mapping.
-        int idx = findAlias(first);
+ 
+        int idx = findAlias(first);/* resolve history shortcuts before checking aliases, since aliases may expand to history commands. */
         if (idx != -1)
         {
             char newLine[MAX_LINE];
@@ -723,7 +712,7 @@ int expand_command(char *input)
         }
         break;
     }
-    if (expansions >= max_expansions)
+    if (expansions >= max_expansions)/* Stop after a safe number of substitutions to avoid alias cycles. */
     {
         fprintf(stderr, "Error:  Recursive alias or cycle detected.\n");
         return 0;
@@ -739,23 +728,23 @@ int main(void)
     char *home = getenv("HOME");
     char *originalPath = strdup(getenv("PATH"));
 
-    // change at the start of your shell its current direcotry to the HOME directory
+
     if (home != NULL)
     {
         chdir(home);
     }
 
-    //  char s[100];
+
     //  printf("%s\n", getcwd(s,100));
 
     load_history();
     load_aliases();
-
+/* main shell loop: read commands, expand aliases/history, parse, and execute. */
     while (1)
     {
         printf("shell> ");
 
-        if (fgets(input, sizeof(input), stdin) == NULL)
+        if (fgets(input, sizeof(input), stdin) == NULL)/* save state and clean up if the user closes input with Ctrl-D. */
         {
             save_history();
             save_aliases();
