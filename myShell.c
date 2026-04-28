@@ -227,8 +227,8 @@ int history_exists(int cmd_no)
     return 1;
 }
 /* copies a stored history command into the output buffer if it exists. 
- * copies the command line for history command number cmd_no into out (null-terminated).
- * returns 1 on success 0 on failure.
+ copies the command line for history command number cmd_no into out (null-terminated).
+ returns 1 on success 0 on failure.
  */
 int get_history_command(int cmd_no, char *out, size_t outsz)
 {
