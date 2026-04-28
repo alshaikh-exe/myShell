@@ -1,6 +1,4 @@
-/* =========================
- * Imports / Libraries
- * ========================= */
+// Imports / Libraries 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>    
@@ -10,9 +8,8 @@
 #include <errno.h>   
 #include <ctype.h>   
 
-/* =========================
- * Constants / Macros
- * ========================= */
+// Constants / Macros
+
 #define MAX_ARGS 50
 #define HIST_SIZE 20
 #define MAX_LINE 512
