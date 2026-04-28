@@ -731,9 +731,6 @@ int main(void)
         chdir(home);
     }
 
-
-    //  printf("%s\n", getcwd(s,100));
-
     load_history();
     load_aliases();
 /* main shell loop: read commands, expand aliases/history, parse, and execute. */
